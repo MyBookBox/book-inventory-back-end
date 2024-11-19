@@ -1,0 +1,9 @@
+PORT = 3000
+DATABASE_HOST = localhost
+DATABASE_PORT = 5432
+DATABASE_USERNAME = postgres
+DATABASE_PASSWORD = 123
+DATABASE_NAME = Book_Inventory
+
+ACCESS_TOKEN_SECRET_KEY=likujyhtgrfedwsedrftgyhujikolplokijuhygtrfedwsedrftghyujikolpplokijuhy
+ACCESS_TOKEN_EXPIRE_TIME=60
