@@ -21,12 +21,11 @@ export class UserEntity {
     array: true,
     default: [RoleTypes.USER],
   })
-  role: RoleTypes;
+  role: RoleTypes[];
 
   @Column({
     type: 'enum',
     enum: Status,
-    array: false,
     default: Status.ACTIVE,
   })
   status: Status;

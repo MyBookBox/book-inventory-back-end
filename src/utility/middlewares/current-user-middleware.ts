@@ -1,10 +1,13 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import { isArray } from 'class-validator';
-import { verify } from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 import { UserService } from '../../user/user.service';
 import { UserEntity } from '../../user/entities/user.entity';
+import { verify } from 'jsonwebtoken';
 
 dotenv.config();
 declare global {
@@ -15,52 +18,40 @@ declare global {
     }
   }
 }
+
 @Injectable()
-export class LoggerMiddleware implements NestMiddleware {
+export class CurrentUserMiddleware implements NestMiddleware {
   constructor(private readonly userService: UserService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+      throw new UnauthorizedException('Token not provided');
+    }
 
-    if (
-      !authHeader ||
-      isArray(authHeader) ||
-      !authHeader.startsWith('Bearer')
-    ) {
-      next();
-    } else {
-      const token = authHeader.split(' ')[1];
-      const secretKey =
-        process.env.ACCESS_TOKEN_SECRET_KEY ||
-        'likujyhtgrfedwsedrftgyhujikolplokijuhygtrfedwsedrftghyujikolpplokijuhy';
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = verify(token, process.env.ACCESS_TOKEN_SECRET_KEY) as { id: number };
 
-      console.log(`Token: ${token}`);
-
-      try {
-        const decoded = <JwtPayload>await verify(token, secretKey);
-        const { id } = decoded;
-
-        // Log to verify the token decoding
-        console.log(`Decoded ID: ${id}`);
-
-        // Ensure the ID is a valid number
-        const userId = Number(id);
-        console.log(`Parsed user ID: ${userId}`);
-
-        if (isNaN(userId)) {
-          throw new Error('Invalid user ID from token');
-        }
-
-        req.currentUser = await this.userService.findOne(userId);
-        next();
-      } catch (error) {
-        console.error('Error in LoggerMiddleware:', error);
-        next();
+      if (!decoded || typeof decoded.id !== 'number') {
+        throw new UnauthorizedException(
+          'Invalid token payload: Missing or invalid ID',
+        );
       }
+
+      const user = await this.userService.findOne(decoded.id);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      req['user'] = user;
+      next();
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Token expired');
+      }
+      throw new UnauthorizedException(error.message || 'Invalid token');
     }
   }
-}
-
-interface JwtPayload {
-  id: number;
 }

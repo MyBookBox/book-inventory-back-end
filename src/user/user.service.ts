@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
@@ -92,17 +88,11 @@ export class UserService {
   }
 
   async findOne(id: number): Promise<UserEntity> {
-    // Validate that id is a valid number
-    if (isNaN(id)) {
-      throw new Error(`${id} Invalid user ID`);
+    if (!id || typeof id !== 'number' || isNaN(id)) {
+      throw new Error(`${id} is an invalid user ID`);
     }
 
-    const user = await this.usersRepository.findOneBy({ id });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return user;
+    return await this.usersRepository.findOne({ where: { id } });
   }
 
   async remove(id: number): Promise<boolean> {
