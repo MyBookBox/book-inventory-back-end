@@ -7,8 +7,8 @@ import {
   Delete,
   UseGuards,
   UnauthorizedException,
-  Req,
-} from '@nestjs/common';
+  Req, Patch
+} from "@nestjs/common";
 import { UserService } from './user.service';
 import { UserSignupDto } from './dto/user-signup.dto';
 import { UserEntity } from './entities/user.entity';
@@ -18,6 +18,9 @@ import { JwtAuthGuard } from '../utility/guards/authentication-guard';
 import { RolesGuard } from '../utility/guards/roles-guard';
 import { Roles } from '../utility/decorators/role-decorator';
 import { RoleTypes } from '../enum/user-enum';
+import { BookDto } from "../book/dto/book.dto";
+import { BookEntity } from "../book/entities/book.entity";
+import { UserEditDto } from "./dto/user-edit.dto";
 
 @Controller('user')
 export class UserController {
@@ -55,6 +58,16 @@ export class UserController {
       throw new UnauthorizedException('User ID not found in request');
     }
     return this.userService.findOne(userIdFromMiddleware);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @Roles(RoleTypes.ADMIN, RoleTypes.USER)
+  async update(
+    @Param('id') id: number,
+    @Body() userEditDto: UserEditDto,
+  ): Promise<UserEntity> {
+    return await this.userService.update(id, userEditDto);
   }
 
   @Delete(':id')

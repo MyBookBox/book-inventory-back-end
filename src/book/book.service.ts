@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { BookDto } from './dto/book.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from "typeorm";
 import { BookEntity } from './entities/book.entity';
 import { Status } from '../enum/book-enum';
 
@@ -49,6 +49,26 @@ export class BookService {
     }
 
     return books;
+  }
+
+  async searchBook(query: string): Promise<BookEntity[]> {
+    if (!query) {
+      throw new BadRequestException('Search query cannot be empty');
+    }
+    const parsedDate = !isNaN(Date.parse(query)) ? new Date(query) : null;
+    return this.bookEntityRepository.find({
+      where: [
+        { title: ILike(`%${query}%`) },
+        { author: ILike(`%${query}%`) },
+        { genre: ILike(`%${query}%`) },
+        {
+          status: Object.values(Status).includes(query as Status)
+            ? (query as Status)
+            : undefined,
+        },
+        { publish_date: parsedDate || undefined },
+      ].filter(Boolean),
+    });
   }
 
   async findOne(id: string): Promise<BookEntity> {

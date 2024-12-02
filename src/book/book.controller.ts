@@ -41,6 +41,13 @@ export class BookController {
     return this.bookService.findAll(title, author, genre, status, publish_date);
   }
 
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  @Roles(RoleTypes.USER, RoleTypes.ADMIN)
+  async searchBook(@Query('query') query: string): Promise<BookEntity[]> {
+    return this.bookService.searchBook(query);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @Roles(RoleTypes.USER, RoleTypes.ADMIN)

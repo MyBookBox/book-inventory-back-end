@@ -1,12 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserEntity } from './entities/user.entity';
-import { UserSignupDto } from './dto/user-signup.dto';
-import { compare, hash } from 'bcrypt';
-import { UserSigninDto } from './dto/user-signin.dto';
-import * as dotenv from 'dotenv';
-import { sign } from 'jsonwebtoken';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { UserEntity } from "./entities/user.entity";
+import { UserSignupDto } from "./dto/user-signup.dto";
+import { compare, hash } from "bcrypt";
+import { UserSigninDto } from "./dto/user-signin.dto";
+import * as dotenv from "dotenv";
+import { sign } from "jsonwebtoken";
+import { UserEditDto } from "./dto/user-edit.dto";
+import { Status } from "../enum/user-enum";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -34,6 +36,9 @@ export class UserService {
   async signin(userSigninDto: UserSigninDto): Promise<UserEntity> {
     const userExist = await this.findUserByEmail(userSigninDto.email);
     if (!userExist) throw new BadRequestException('User not found');
+
+    if (userExist.status == Status.DEACTIVATED)
+      throw new BadRequestException('User is Deactivated');
 
     const isPasswordValid = await compare(
       userSigninDto.password,
@@ -93,6 +98,21 @@ export class UserService {
     }
 
     return await this.usersRepository.findOne({ where: { id } });
+  }
+
+  async update(id: number, userEditDto: UserEditDto): Promise<UserEntity> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    Object.assign(user, userEditDto, {
+      password: user.password,
+      status: userEditDto.status || user.status, // Ensure status is set if not provided
+    });
+    return await this.usersRepository.save(user);
   }
 
   async remove(id: number): Promise<boolean> {

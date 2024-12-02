@@ -1,15 +1,13 @@
 import {
-  IsNotEmpty,
-  IsString,
-  IsEmail,
-  IsOptional,
-  Length,
-  IsArray,
+  IsArray, IsEmail,
   IsEnum,
-} from 'class-validator';
+  IsNotEmpty,
+  IsOptional,
+  IsString
+} from "class-validator";
 import { RoleTypes, Status } from '../../enum/user-enum';
 
-export class UserSignupDto {
+export class UserEditDto {
   @IsNotEmpty({ message: 'Name is Required' })
   @IsString({ message: 'Name must be a String' })
   name: string;
@@ -17,10 +15,6 @@ export class UserSignupDto {
   @IsNotEmpty({ message: 'Email is Required' })
   @IsEmail({}, { message: 'Email is invalid' })
   email: string;
-
-  @IsNotEmpty({ message: 'Password is Required' })
-  @Length(8, 20, { message: 'Password must be between 8 and 20 characters' })
-  password: string;
 
   @IsArray({ message: 'Role must be an Array of Strings' })
   @IsOptional()

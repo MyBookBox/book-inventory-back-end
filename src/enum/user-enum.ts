@@ -5,5 +5,5 @@ export enum RoleTypes {
 
 export enum Status {
   ACTIVE = 'Active',
-  DELETED = 'Deleted',
+  DEACTIVATED = 'Deactivated',
 }
