@@ -9,6 +9,7 @@ import * as dotenv from "dotenv";
 import { sign } from "jsonwebtoken";
 import { UserEditDto } from "./dto/user-edit.dto";
 import { Status } from "../enum/user-enum";
+import { UserChangePasswordDto } from "./dto/user-change-password.dto";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -48,6 +49,29 @@ export class UserService {
       throw new BadRequestException('Invalid credentials');
     }
     return userExist;
+  }
+
+  async changePassword(
+    userChangePasswordDto: UserChangePasswordDto,
+  ): Promise<UserEntity> {
+    const userExist = await this.findUserByEmail(userChangePasswordDto.email);
+    if (!userExist) throw new BadRequestException('User not found');
+
+    if (userExist.status == Status.DEACTIVATED)
+      throw new BadRequestException('User is Deactivated');
+
+    const isPasswordValid = await compare(
+      userChangePasswordDto.currentPassword,
+      userExist.password,
+    );
+    if (!isPasswordValid) {
+      throw new BadRequestException('Invalid credentials');
+    }
+    Object.assign(userExist, userChangePasswordDto, {
+      password: await hash(userChangePasswordDto.newPassword, 10),
+      status: userExist.status,
+    });
+    return await this.usersRepository.save(userExist);
   }
 
   async findUserByEmail(email: string): Promise<UserEntity | undefined> {

@@ -1,14 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
   UnauthorizedException,
-  Req, Patch
-} from "@nestjs/common";
+  UseGuards,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserSignupDto } from './dto/user-signup.dto';
 import { UserEntity } from './entities/user.entity';
@@ -18,9 +19,8 @@ import { JwtAuthGuard } from '../utility/guards/authentication-guard';
 import { RolesGuard } from '../utility/guards/roles-guard';
 import { Roles } from '../utility/decorators/role-decorator';
 import { RoleTypes } from '../enum/user-enum';
-import { BookDto } from "../book/dto/book.dto";
-import { BookEntity } from "../book/entities/book.entity";
-import { UserEditDto } from "./dto/user-edit.dto";
+import { UserEditDto } from './dto/user-edit.dto';
+import { UserChangePasswordDto } from "./dto/user-change-password.dto";
 
 @Controller('user')
 export class UserController {
@@ -40,6 +40,15 @@ export class UserController {
     const user = await this.userService.signin(userSigninDto);
     const accessToken = await this.userService.accessToken(user);
     return { accessToken, user };
+  }
+
+  @Post('change-password')
+  @Roles(RoleTypes.USER, RoleTypes.ADMIN)
+  async changePassword(
+    @Body() userChangePasswordDto: UserChangePasswordDto,
+  ): Promise<{ user: UserEntity }> {
+    const user = await this.userService.changePassword(userChangePasswordDto);
+    return { user };
   }
 
   @Get()

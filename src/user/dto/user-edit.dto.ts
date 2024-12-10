@@ -1,10 +1,11 @@
 import {
-  IsArray, IsEmail,
+  IsArray,
+  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsString
-} from "class-validator";
+  IsString,
+} from 'class-validator';
 import { RoleTypes, Status } from '../../enum/user-enum';
 
 export class UserEditDto {
